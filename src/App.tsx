@@ -1,15 +1,21 @@
 import { useState } from 'react';
+import { HwpTable } from './components/HwpTable';
 import {
   DEFAULT_REMOVAL_OPTIONS,
   DEFAULT_TRANSFORM_OPTIONS,
   transformText,
+  type OutputMode,
   type RemovalOptions,
   type SpaceCountMode,
   type LineBreakMode,
+  type TransformResult,
 } from './utils/transformText';
+import { downloadXlsx, padRows } from './utils/tableUtils';
 import './App.css';
 
 type RemovalOptionKey = keyof RemovalOptions;
+
+const EMPTY_RESULT: TransformResult = { plainText: '', rows: [] };
 
 const REMOVAL_LABELS: Record<RemovalOptionKey, string> = {
   removePeriod: '마침표 제거',
@@ -19,13 +25,13 @@ const REMOVAL_LABELS: Record<RemovalOptionKey, string> = {
   removeParentheses: '괄호 제거 (소괄호·중괄호·대괄호)',
   removeQuotes: '따옴표류 제거',
   removeHanja: '한자 제거',
-  removeNonKorean: '한글 외 다른 나라 문자 제거 (영어 포함)',
+  removeNonKorean: '한글 외 다른 문자(영어 등) 제거 (영어 제거)',
   removeOtherSymbols: '기타 기호 제거',
 };
 
 function App() {
   const [sourceText, setSourceText] = useState('');
-  const [resultText, setResultText] = useState('');
+  const [result, setResult] = useState<TransformResult>(EMPTY_RESULT);
   const [maxCharsPerLine, setMaxCharsPerLine] = useState(
     DEFAULT_TRANSFORM_OPTIONS.maxCharsPerLine,
   );
@@ -35,10 +41,21 @@ function App() {
   const [lineBreakMode, setLineBreakMode] = useState<LineBreakMode>(
     DEFAULT_TRANSFORM_OPTIONS.lineBreakMode,
   );
+  const [outputMode, setOutputMode] = useState<OutputMode>('plain');
   const [removal, setRemoval] = useState<RemovalOptions>({
     ...DEFAULT_REMOVAL_OPTIONS,
   });
   const [copyMessage, setCopyMessage] = useState('');
+
+  const gridRows =
+    outputMode === 'hwpTable' && result.rows.length > 0
+      ? padRows(result.rows, maxCharsPerLine)
+      : result.rows;
+
+  const hasResult =
+    outputMode === 'hwpTable'
+      ? result.rows.length > 0
+      : result.plainText.length > 0;
 
   const handleTransform = () => {
     const converted = transformText(sourceText, {
@@ -47,29 +64,43 @@ function App() {
       lineBreakMode,
       removal,
     });
-    setResultText(converted);
+    setResult(converted);
     setCopyMessage('');
   };
 
+  const lineCount = result.rows.length;
+
   const handleCopy = async () => {
-    if (!resultText) {
+    if (!hasResult) {
       return;
     }
 
     try {
-      await navigator.clipboard.writeText(resultText);
+      await navigator.clipboard.writeText(result.plainText);
       setCopyMessage('결과가 클립보드에 복사되었습니다.');
     } catch {
       setCopyMessage('복사에 실패했습니다. 브라우저 권한을 확인해 주세요.');
     }
   };
 
+  const handleDownloadXlsx = () => {
+    if (result.rows.length === 0) {
+      return;
+    }
+
+    downloadXlsx(result.rows, 'pilsa-practice.xlsx', maxCharsPerLine);
+    setCopyMessage(
+      'Excel 파일을 다운로드했습니다. 엑셀에서 표를 복사한 뒤 한글 연습장 표를 선택하고 붙여넣으세요.',
+    );
+  };
+
   const handleReset = () => {
     setSourceText('');
-    setResultText('');
+    setResult(EMPTY_RESULT);
     setMaxCharsPerLine(DEFAULT_TRANSFORM_OPTIONS.maxCharsPerLine);
     setSpaceCountMode(DEFAULT_TRANSFORM_OPTIONS.spaceCountMode);
     setLineBreakMode(DEFAULT_TRANSFORM_OPTIONS.lineBreakMode);
+    setOutputMode('plain');
     setRemoval({ ...DEFAULT_REMOVAL_OPTIONS });
     setCopyMessage('');
   };
@@ -88,7 +119,7 @@ function App() {
       <header className="app-header">
         <h1>필사 연습장 줄바꿈 변환기</h1>
         <p className="privacy-note">
-          입력한 텍스트는 브라우저 안에서만 처리되며 외부 서버로 전송되지 않습니다.
+          입력한 텍스트는 서버로 전송되지 않으며, 모든 변환은 브라우저 안에서만 처리됩니다.
         </p>
       </header>
 
@@ -103,6 +134,36 @@ function App() {
             onChange={(event) => handleMaxCharsChange(event.target.value)}
           />
         </div>
+
+        <fieldset className="setting-group">
+          <legend>출력 형식</legend>
+          <label>
+            <input
+              type="radio"
+              name="output-mode"
+              value="plain"
+              checked={outputMode === 'plain'}
+              onChange={() => setOutputMode('plain')}
+            />
+            기본 텍스트
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="output-mode"
+              value="hwpTable"
+              checked={outputMode === 'hwpTable'}
+              onChange={() => setOutputMode('hwpTable')}
+            />
+            한글 연습장 붙여넣기
+          </label>
+          {outputMode === 'hwpTable' ? (
+            <p className="setting-hint">
+              한글 연습장에는 <strong>Excel 다운로드 → 엑셀에서 복사 → 한글 표 선택 후 붙여넣기</strong>를
+              사용하세요.
+            </p>
+          ) : null}
+        </fieldset>
 
         <fieldset className="setting-group">
           <legend>글자 수 계산 방식</legend>
@@ -171,25 +232,46 @@ function App() {
         </fieldset>
       </section>
 
-      <section className="editor-area" aria-label="원문과 변환 결과">
+      <section className="editor-area" aria-label="텍스트 변환 영역">
         <div className="editor-panel">
           <label htmlFor="source-text">원문 입력</label>
           <textarea
             id="source-text"
             value={sourceText}
             onChange={(event) => setSourceText(event.target.value)}
-            placeholder="시, 편지, 산문 등 원문을 붙여넣으세요."
+            placeholder="시, 편지, 산문 등 원문을 붙여넣어 주세요."
           />
         </div>
 
         <div className="editor-panel">
-          <label htmlFor="result-text">변환 결과</label>
-          <textarea
-            id="result-text"
-            value={resultText}
-            readOnly
-            placeholder="변환 버튼을 누르면 결과가 표시됩니다."
-          />
+          <div className="panel-heading">
+            <label htmlFor="result-text">변환 결과</label>
+            {lineCount > 0 ? (
+              <span className="line-count">{lineCount}줄</span>
+            ) : null}
+          </div>
+          {outputMode === 'hwpTable' ? (
+            <>
+              <p className="result-hint">
+                Excel 다운로드 후 엑셀에서 표를 복사한 뒤, 한글 연습장 표 전체(20칸)를
+                드래그해 선택하고 붙여넣으세요.
+              </p>
+              <div className="result-table-wrap">
+                {gridRows.length > 0 ? (
+                  <HwpTable rows={gridRows} />
+                ) : (
+                  <p className="result-empty">변환 버튼을 누르면 표가 표시됩니다.</p>
+                )}
+              </div>
+            </>
+          ) : (
+            <textarea
+              id="result-text"
+              value={result.plainText}
+              readOnly
+              placeholder="변환 버튼을 누르면 결과가 표시됩니다."
+            />
+          )}
         </div>
       </section>
 
@@ -197,9 +279,21 @@ function App() {
         <button type="button" onClick={handleTransform}>
           변환
         </button>
-        <button type="button" onClick={handleCopy} disabled={!resultText}>
-          결과 복사
-        </button>
+        {outputMode === 'plain' ? (
+          <button type="button" onClick={handleCopy} disabled={!hasResult}>
+            결과 복사
+          </button>
+        ) : null}
+        {outputMode === 'hwpTable' ? (
+          <button
+            type="button"
+            className="primary-action"
+            onClick={handleDownloadXlsx}
+            disabled={result.rows.length === 0}
+          >
+            Excel 다운로드
+          </button>
+        ) : null}
         <button type="button" onClick={handleReset}>
           초기화
         </button>

@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_REMOVAL_OPTIONS,
+  lineToCells,
+  linesToRows,
   normalizeMaxCharsPerLine,
   transformText,
   type RemovalOptions,
   type TransformOptions,
 } from './transformText';
+import { rowsToTsv } from './tableUtils';
 
 const noRemoval: RemovalOptions = {
   removePeriod: false,
@@ -42,7 +45,7 @@ describe('transformText', () => {
       }),
     );
 
-    expect(result).toBe(
+    expect(result.plainText).toBe(
       '안녕하세요반갑습니다오늘날씨가정말\n좋습니다',
     );
   });
@@ -57,7 +60,7 @@ describe('transformText', () => {
       }),
     );
 
-    expect(result).toBe(
+    expect(result.plainText).toBe(
       '안녕하세요 반갑습니다 오늘 날씨가\n정말 좋습니다',
     );
   });
@@ -72,7 +75,7 @@ describe('transformText', () => {
       }),
     );
 
-    expect(result).toBe(
+    expect(result.plainText).toBe(
       '가나다라마바사아자차카타파하거너더러머버\n서',
     );
   });
@@ -94,7 +97,7 @@ describe('transformText', () => {
       }),
     );
 
-    expect(result).toBe('안녕 세상 정말 좋나');
+    expect(result.plainText).toBe('안녕 세상 정말 좋나');
   });
 
   it('괄호와 따옴표 제거', () => {
@@ -112,7 +115,7 @@ describe('transformText', () => {
       }),
     );
 
-    expect(result).toBe('안녕 반가워 하세요 좋아 하세요');
+    expect(result.plainText).toBe('안녕 반가워 하세요 좋아 하세요');
   });
 
   it('한글 외 문자 제거 (영어·한자 포함)', () => {
@@ -130,7 +133,7 @@ describe('transformText', () => {
       }),
     );
 
-    expect(result).toBe('안녕');
+    expect(result.plainText).toBe('안녕');
   });
 
   it('문단 구분을 유지한다', () => {
@@ -147,7 +150,7 @@ describe('transformText', () => {
       }),
     );
 
-    expect(result).toBe('첫 번째 문단입니다\n\n두 번째 문단입니다');
+    expect(result.plainText).toBe('첫 번째 문단입니다\n\n두 번째 문단입니다');
   });
 
   it('마침표 제거를 해제하면 기타 기호 제거가 켜져 있어도 마침표를 유지한다', () => {
@@ -164,7 +167,7 @@ describe('transformText', () => {
       }),
     );
 
-    expect(result).toBe('안녕. 세상.');
+    expect(result.plainText).toBe('안녕. 세상.');
   });
 
   it('유지된 마침표는 글자 수 계산에 포함된다', () => {
@@ -182,7 +185,7 @@ describe('transformText', () => {
       }),
     );
 
-    expect(result).toBe('가나다라마바사아자차카.타파하거너더러머\n버');
+    expect(result.plainText).toBe('가나다라마바사아자차카.타파하거너더러머\n버');
   });
 
   it('원문 줄이 짧아도 문단 내부에서는 이어 붙여 최대 글자 수를 채운다', () => {
@@ -195,9 +198,9 @@ describe('transformText', () => {
       }),
     );
 
-    expect(result).toBe('나는오늘좋은밤에수선화를보았다정말\n아름다웠다');
-    expect(result.split('\n').every((line) => line.length <= 20)).toBe(true);
-    expect(result).not.toBe('나는오늘\n좋은밤에\n수선화를보았다\n정말아름다웠다');
+    expect(result.plainText).toBe('나는오늘좋은밤에수선화를보았다정말\n아름다웠다');
+    expect(result.plainText.split('\n').every((line) => line.length <= 20)).toBe(true);
+    expect(result.plainText).not.toBe('나는오늘\n좋은밤에\n수선화를보았다\n정말아름다웠다');
   });
 
   it('빈 줄로 구분된 문단은 유지한다', () => {
@@ -211,7 +214,7 @@ describe('transformText', () => {
       }),
     );
 
-    expect(result).toBe(
+    expect(result.plainText).toBe(
       '첫번째문단입니다아직같은문단입니다\n\n두번째문단입니다이문단도이어집니다',
     );
   });
@@ -226,7 +229,7 @@ describe('transformText', () => {
       }),
     );
 
-    expect(result).not.toMatch(/\s/);
+    expect(result.plainText).not.toMatch(/\s/);
   });
 
   it('띄어쓰기 포함 모드에서는 문단 내부 줄바꿈이 공백으로 바뀐다', () => {
@@ -239,8 +242,8 @@ describe('transformText', () => {
       }),
     );
 
-    expect(result).toBe('나는 오늘 좋은 밤에 수선화를 보았다');
-    expect(result).not.toContain('나는 오늘\n좋은 밤에');
+    expect(result.plainText).toBe('나는 오늘 좋은 밤에 수선화를 보았다');
+    expect(result.plainText).not.toContain('나는 오늘\n좋은 밤에');
   });
 
   it('어절 단위 줄넘김에서는 단어 중간이 끊기지 않는다', () => {
@@ -253,7 +256,7 @@ describe('transformText', () => {
       }),
     );
 
-    const lines = result.split('\n');
+    const lines = result.plainText.split('\n');
     expect(lines[0]).toBe('안녕하세요반갑습니다오늘날씨가정말');
     expect(lines[1]).toBe('좋습니다');
     expect(lines.every((line) => line.length <= 20)).toBe(true);
@@ -269,7 +272,7 @@ describe('transformText', () => {
       }),
     );
 
-    const lines = result.split('\n');
+    const lines = result.plainText.split('\n');
     expect(lines[0]).toHaveLength(20);
     expect(lines[1]).toHaveLength(1);
   });
@@ -286,7 +289,7 @@ describe('transformText', () => {
       }),
     );
 
-    expect(result).toBe(`짧은\n${'가'.repeat(10)}\n${'가'.repeat(5)}끝`);
+    expect(result.plainText).toBe(`짧은\n${'가'.repeat(10)}\n${'가'.repeat(5)}끝`);
   });
 
   it('단일 어절이 최대 글자 수보다 길어도 무한 루프 없이 처리한다', () => {
@@ -299,12 +302,74 @@ describe('transformText', () => {
       }),
     );
 
-    const lines = result.split('\n');
+    const lines = result.plainText.split('\n');
     expect(lines).toHaveLength(3);
     expect(lines[0]).toBe('가'.repeat(20));
     expect(lines[1]).toBe('가'.repeat(20));
     expect(lines[2]).toBe('가'.repeat(5));
     expect(lines.every((line) => line.length <= 20)).toBe(true);
+  });
+});
+
+
+describe('transformText rows', () => {
+  it('"안녕하세요"를 한 글자씩 셀 배열로 생성한다', () => {
+    const result = transformText(
+      '안녕하세요',
+      createOptions({ spaceCountMode: 'exclude', lineBreakMode: 'char' }),
+    );
+    expect(result.rows).toEqual([['안', '녕', '하', '세', '요']]);
+  });
+
+  it('띄어쓰기 제외: "나는 좋습니다"', () => {
+    const result = transformText(
+      '나는 좋습니다',
+      createOptions({ spaceCountMode: 'exclude', lineBreakMode: 'char' }),
+    );
+    expect(result.rows).toEqual([['나', '는', '좋', '습', '니', '다']]);
+  });
+
+  it('띄어쓰기 포함: "나는 좋습니다"에서 공백은 빈 칸', () => {
+    const result = transformText(
+      '나는 좋습니다',
+      createOptions({ spaceCountMode: 'include', lineBreakMode: 'char' }),
+    );
+    expect(result.rows).toEqual([['나', '는', '', '좋', '습', '니', '다']]);
+  });
+
+  it('20자 기준으로 행이 분리된다', () => {
+    const result = transformText(
+      '가'.repeat(25),
+      createOptions({
+        spaceCountMode: 'exclude',
+        lineBreakMode: 'char',
+        maxCharsPerLine: 20,
+      }),
+    );
+    expect(result.rows).toHaveLength(2);
+    expect(result.rows[0]).toHaveLength(20);
+    expect(result.rows[1]).toHaveLength(5);
+  });
+
+  it('linesToRows로 2차원 배열 예시를 생성한다', () => {
+    expect(linesToRows(['골목길머뭇', '끄덕임을난'])).toEqual([
+      ['골', '목', '길', '머', '뭇'],
+      ['끄', '덕', '임', '을', '난'],
+    ]);
+  });
+});
+
+describe('lineToCells / linesToRows', () => {
+  it('공백을 빈 칸으로 변환한다', () => {
+    expect(lineToCells('나는 좋')).toEqual(['나', '는', '', '좋']);
+  });
+});
+
+describe('rowsToTsv', () => {
+  it('행은 줄바꿈, 열은 탭으로 구분한다', () => {
+    expect(rowsToTsv([['골', '목', '길'], ['끄', '덕', '']])).toBe(
+      '골\t목\t길\r\n끄\t덕\t',
+    );
   });
 });
 

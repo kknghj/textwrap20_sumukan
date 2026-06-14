@@ -111,6 +111,18 @@ body {
   font-weight: 600;
 }
 
+.panel-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.line-count {
+  color: #475569;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
 .editor-panel textarea {
   width: 100%;
   min-height: 320px;
@@ -162,13 +174,55 @@ body {
   background: #475569;
 }
 
+
+.setting-hint,
+.result-hint {
+  margin: 8px 0 0;
+  color: #475569;
+  font-size: 0.9rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
 .copy-message {
   margin: 12px 0 0;
   color: #047857;
   font-weight: 600;
 }
 
-@media (max-width: 768px) {
+
+.result-table-wrap {
+  width: 100%;
+  min-height: 320px;
+  padding: 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #ffffff;
+  overflow: auto;
+}
+
+.result-empty {
+  margin: 0;
+  color: #94a3b8;
+}
+
+.hwp-table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.hwp-table td {
+  border: 1px solid #cbd5e1;
+  padding: 8px 4px;
+  text-align: center;
+  min-width: 2em;
+  height: 2em;
+  font: inherit;
+  line-height: 1.5;
+}
+
+.actions button.primary-action { background: #059669; }\n.actions button.primary-action:hover:not(:disabled) { background: #047857; }\n\n@media (max-width: 768px) {
   .editor-area {
     grid-template-columns: 1fr;
   }

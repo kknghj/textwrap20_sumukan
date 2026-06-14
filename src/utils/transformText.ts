@@ -1,5 +1,6 @@
 export type SpaceCountMode = 'exclude' | 'include';
 export type LineBreakMode = 'word' | 'char';
+export type OutputMode = 'plain' | 'hwpTable';
 
 export interface RemovalOptions {
   removePeriod: boolean;
@@ -18,6 +19,11 @@ export interface TransformOptions {
   spaceCountMode: SpaceCountMode;
   lineBreakMode: LineBreakMode;
   removal: RemovalOptions;
+}
+
+export interface TransformResult {
+  plainText: string;
+  rows: string[][];
 }
 
 export const DEFAULT_REMOVAL_OPTIONS: RemovalOptions = {
@@ -262,19 +268,41 @@ function normalizeParagraphNewlines(paragraph: string): string {
   return paragraph.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
-export function transformText(text: string, options: TransformOptions): string {
-  const paragraphs = splitParagraphs(text);
+/** 한 줄 문자열을 표 셀 배열로 변환한다. 공백은 빈 칸('')으로 표현한다. */
+export function lineToCells(line: string): string[] {
+  return [...line].map((char) => (char === ' ' ? '' : char));
+}
 
-  const wrappedParagraphs = paragraphs.map((rawParagraph) => {
+/** 줄 배열을 2차원 셀 배열로 변환한다. */
+export function linesToRows(lines: string[]): string[][] {
+  return lines.map(lineToCells);
+}
+
+export function transformText(
+  text: string,
+  options: TransformOptions,
+): TransformResult {
+  const paragraphs = splitParagraphs(text);
+  const plainParts: string[] = [];
+  const rows: string[][] = [];
+
+  for (const rawParagraph of paragraphs) {
     const normalizedParagraph = normalizeParagraphNewlines(rawParagraph);
     if (!normalizedParagraph) {
-      return '';
+      continue;
     }
 
     const cleanedText = removeCharacters(normalizedParagraph, options.removal);
     const lines = wrapParagraph(cleanedText, options);
-    return lines.join('\n');
-  });
 
-  return wrappedParagraphs.join('\n\n');
+    if (lines.length > 0) {
+      plainParts.push(lines.join('\n'));
+      rows.push(...linesToRows(lines));
+    }
+  }
+
+  return {
+    plainText: plainParts.join('\n\n'),
+    rows,
+  };
 }
