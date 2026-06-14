@@ -98,7 +98,7 @@ function App() {
           <input
             id="max-chars"
             type="number"
-            min={10}
+            min={20}
             value={maxCharsPerLine}
             onChange={(event) => handleMaxCharsChange(event.target.value)}
           />

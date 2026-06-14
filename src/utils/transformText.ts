@@ -39,7 +39,7 @@ export const DEFAULT_TRANSFORM_OPTIONS: TransformOptions = {
   removal: DEFAULT_REMOVAL_OPTIONS,
 };
 
-const MIN_CHARS_PER_LINE = 10;
+const MIN_CHARS_PER_LINE = 20;
 
 const HANJA_REGEX = /[\u4E00-\u9FFF]/;
 const KOREAN_REGEX = /[\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F]/;
@@ -173,18 +173,6 @@ function wrapByWords(
   let currentLine = '';
 
   for (const word of words) {
-    if (countChars(word, spaceCountMode) > maxChars) {
-      if (currentLine) {
-        lines.push(currentLine);
-        currentLine = '';
-      }
-
-      const wordLines = wrapByChars(word, maxChars, spaceCountMode);
-      lines.push(...wordLines.slice(0, -1));
-      currentLine = wordLines[wordLines.length - 1] ?? '';
-      continue;
-    }
-
     const separator = currentLine && spaceCountMode === 'include' ? ' ' : '';
     const candidate = `${currentLine}${separator}${word}`;
 
@@ -239,7 +227,7 @@ function wrapParagraph(
   const trimmed = paragraph.trim();
 
   if (!trimmed) {
-    return [];
+    return [''];
   }
 
   if (options.lineBreakMode === 'word') {
@@ -254,27 +242,14 @@ function wrapParagraph(
   return wrapByChars(normalizedText, maxChars, options.spaceCountMode);
 }
 
-function splitParagraphs(text: string): string[] {
-  return text.replace(/\r/g, '').split(/\n\s*\n/);
-}
-
-function normalizeParagraphNewlines(paragraph: string): string {
-  return paragraph.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
-}
-
 export function transformText(text: string, options: TransformOptions): string {
-  const paragraphs = splitParagraphs(text);
+  const cleanedText = removeCharacters(text, options.removal);
+  const paragraphs = cleanedText.replace(/\r/g, '').split('\n');
 
-  const wrappedParagraphs = paragraphs.map((rawParagraph) => {
-    const normalizedParagraph = normalizeParagraphNewlines(rawParagraph);
-    if (!normalizedParagraph) {
-      return '';
-    }
-
-    const cleanedText = removeCharacters(normalizedParagraph, options.removal);
-    const lines = wrapParagraph(cleanedText, options);
+  const wrappedParagraphs = paragraphs.map((paragraph) => {
+    const lines = wrapParagraph(paragraph, options);
     return lines.join('\n');
   });
 
-  return wrappedParagraphs.join('\n\n');
+  return wrappedParagraphs.join('\n');
 }
