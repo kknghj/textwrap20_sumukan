@@ -159,7 +159,8 @@ function App() {
           </label>
           {outputMode === 'hwpTable' ? (
             <p className="setting-hint">
-              한글 연습장에는 <strong>Excel 다운로드 → 엑셀에서 복사 → 한글 표 선택 후 붙여넣기</strong>를
+              한글 연습장에는{' '}
+              <strong>Excel 다운로드 → 엑셀에서 복사 → 한글 표의 첫 칸을 선택 후 붙여넣기</strong>를
               사용하세요.
             </p>
           ) : null}
@@ -253,8 +254,8 @@ function App() {
           {outputMode === 'hwpTable' ? (
             <>
               <p className="result-hint">
-                Excel 다운로드 후 엑셀에서 표를 복사한 뒤, 한글 연습장 표 전체(20칸)를
-                드래그해 선택하고 붙여넣으세요.
+                Excel 다운로드 후 엑셀에서 표를 복사한 뒤, 한글 연습장 표 첫 칸에 '내용만
+                덮어쓰기' 선택하고 붙어넣으세요.
               </p>
               <div className="result-table-wrap">
                 {gridRows.length > 0 ? (
