@@ -222,7 +222,15 @@ body {
   line-height: 1.5;
 }
 
-.actions button.primary-action { background: #059669; }\n.actions button.primary-action:hover:not(:disabled) { background: #047857; }\n\n@media (max-width: 768px) {
+.actions button.primary-action {
+  background: #059669;
+}
+
+.actions button.primary-action:hover:not(:disabled) {
+  background: #047857;
+}
+
+@media (max-width: 768px) {
   .editor-area {
     grid-template-columns: 1fr;
   }
