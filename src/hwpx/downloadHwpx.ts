@@ -1,8 +1,7 @@
+import { buildMultiPageSection } from './buildMultiPageSection';
 import { buildHwpx } from './buildHwpx';
-import { HWPX_FILENAME } from './constants';
-import { fillPracticeCells } from './fillPracticeCells';
+import { HWPX_FILENAME, MAX_HWPX_CELLS } from './constants';
 import { loadTemplate } from './loadTemplate';
-import { parseSection } from './parseSection';
 import { prepareHwpxFromSource } from './textToCells';
 import type { HwpxDownloadResult } from './types';
 import type { TransformOptions } from '../utils/transformText';
@@ -21,7 +20,7 @@ export async function createHwpxBlob(
     return {
       success: false,
       reason: 'exceeds_limit',
-      message: `변환 결과가 ${prepared.cellCount}칸으로 580칸을 초과했습니다.`,
+      message: `변환 결과가 ${prepared.cellCount}칸으로 최대 ${MAX_HWPX_CELLS.toLocaleString()}칸을 초과했습니다.`,
     };
   }
 
@@ -43,8 +42,7 @@ export async function createHwpxBlob(
 
     const section0Xml = new TextDecoder().decode(section0Bytes);
     const doc = new DOMParser().parseFromString(section0Xml, 'application/xml');
-    const cells = parseSection(doc);
-    fillPracticeCells(doc, cells, prepared.chars);
+    buildMultiPageSection(doc, prepared.chars);
 
     const serialized = new XMLSerializer().serializeToString(doc);
     const zipBytes = buildHwpx(templateFiles, serialized);

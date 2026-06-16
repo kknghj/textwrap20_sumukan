@@ -6,9 +6,10 @@ import {
 } from '../utils/transformText';
 import {
   HWPX_CHARS_PER_LINE,
-  MAX_CELLS,
+  MAX_HWPX_CELLS,
   PRACTICE_COLS,
 } from './constants';
+import { getPageCount } from './splitCharsIntoPages';
 import type { HwpxCharsResult } from './types';
 
 /** padRows된 2차원 배열을 행 우선 1차원 배열로 평탄화한다. */
@@ -30,12 +31,12 @@ export function countHwpxCells(rows: string[][]): number {
   return padded.length * PRACTICE_COLS;
 }
 
-/** 변환된 rows를 HWPX 셀 배열로 준비한다. 580칸 초과 시 차단한다. */
+/** 변환된 rows를 HWPX 셀 배열로 준비한다. 최대 페이지 한도를 초과하면 차단한다. */
 export function prepareHwpxChars(rows: string[][]): HwpxCharsResult {
   const padded = padRows(rows, HWPX_CHARS_PER_LINE);
   const cellCount = padded.length * PRACTICE_COLS;
 
-  if (cellCount > MAX_CELLS) {
+  if (cellCount > MAX_HWPX_CELLS) {
     return { ok: false, reason: 'exceeds_limit', cellCount };
   }
 
@@ -43,6 +44,7 @@ export function prepareHwpxChars(rows: string[][]): HwpxCharsResult {
     ok: true,
     chars: rowsToCharArray(padded),
     cellCount,
+    pageCount: getPageCount(cellCount),
   };
 }
 
