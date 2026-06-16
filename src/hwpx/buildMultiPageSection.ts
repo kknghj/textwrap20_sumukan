@@ -1,4 +1,4 @@
-import { HP_NS, PRACTICE_COLS, PRACTICE_ROWS } from './constants';
+import { HP_NS, PRACTICE_ROWS } from './constants';
 import { fillPracticeCells } from './fillPracticeCells';
 import { parseSection } from './parseSection';
 import {
