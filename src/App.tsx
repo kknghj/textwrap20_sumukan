@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { HwpTable } from './components/HwpTable';
 import {
   HWPX_EXCEEDS_LIMIT_MESSAGE,
+  HWPX_MULTI_PAGE_HINT,
   HWPX_TEMPLATE_HINT,
 } from './hwpx/constants';
 import { downloadHwpx } from './hwpx/downloadHwpx';
@@ -74,6 +75,8 @@ function App() {
     hwpxPrepared !== null &&
     hwpxPrepared.ok &&
     hwpxPrepared.chars.some(Boolean);
+  const hwpxPageCount =
+    hwpxPrepared !== null && hwpxPrepared.ok ? hwpxPrepared.pageCount : 0;
 
   const gridRows =
     outputMode === 'hwpTable' && result.rows.length > 0
@@ -360,6 +363,11 @@ function App() {
             .hwpx 다운로드
           </button>
           <p className="hwpx-template-hint">{HWPX_TEMPLATE_HINT}</p>
+          {hwpxPageCount > 1 ? (
+            <p className="hwpx-template-hint">
+              {HWPX_MULTI_PAGE_HINT} (예상 {hwpxPageCount}페이지)
+            </p>
+          ) : null}
         </div>
         {outputMode === 'hwpTable' ? (
           <button

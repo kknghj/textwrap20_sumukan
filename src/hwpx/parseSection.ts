@@ -42,9 +42,13 @@ export function parseSection(doc: Document): PracticeCell[] {
   const rowCnt = Number.parseInt(table.getAttribute('rowCnt') ?? '', 10);
   const colCnt = Number.parseInt(table.getAttribute('colCnt') ?? '', 10);
 
-  if (rowCnt !== PRACTICE_ROWS || colCnt !== PRACTICE_COLS) {
+  if (colCnt !== PRACTICE_COLS) {
+    throw new Error(`Unexpected table colCnt: ${colCnt}`);
+  }
+
+  if (rowCnt < PRACTICE_ROWS || rowCnt % PRACTICE_ROWS !== 0) {
     throw new Error(
-      `Unexpected table size: rowCnt=${rowCnt}, colCnt=${colCnt}`,
+      `Unexpected table rowCnt: ${rowCnt} (must be a positive multiple of ${PRACTICE_ROWS})`,
     );
   }
 

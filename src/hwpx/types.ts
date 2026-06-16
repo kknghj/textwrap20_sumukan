@@ -19,6 +19,7 @@ export interface HwpxCharsReadyResult {
   ok: true;
   chars: (string | null)[];
   cellCount: number;
+  pageCount: number;
 }
 
 export type HwpxCharsResult = HwpxExceedsLimitResult | HwpxCharsReadyResult;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_CELLS } from '../../hwpx/constants';
+import { MAX_HWPX_CELLS } from '../../hwpx/constants';
 import {
   countHwpxCells,
   prepareHwpxChars,
@@ -49,15 +49,31 @@ describe('textToCells', () => {
     }
   });
 
-  it('580칸 초과 시 다운로드 불가 상태를 반환한다', () => {
-    const rows = Array.from({ length: 30 }, () => '가'.repeat(20).split(''));
+  it('최대 페이지 한도 초과 시 다운로드 불가 상태를 반환한다', () => {
+    const rows = Array.from({ length: 30 * 20 + 1 }, () =>
+      '가'.repeat(20).split(''),
+    );
     const prepared = prepareHwpxChars(rows);
 
     expect(prepared.ok).toBe(false);
     if (!prepared.ok) {
       expect(prepared.reason).toBe('exceeds_limit');
+      expect(prepared.cellCount).toBeGreaterThan(MAX_HWPX_CELLS);
+    }
+  });
+
+  it('581칸은 다중 페이지로 허용한다', () => {
+    const rows = [
+      ...Array.from({ length: 29 }, () => '가'.repeat(20).split('')),
+      ['가'],
+    ];
+    const prepared = prepareHwpxChars(rows);
+
+    expect(prepared.ok).toBe(true);
+    if (prepared.ok) {
+      expect(prepared.chars.filter(Boolean)).toHaveLength(581);
       expect(prepared.cellCount).toBe(600);
-      expect(prepared.cellCount).toBeGreaterThan(MAX_CELLS);
+      expect(prepared.pageCount).toBe(2);
     }
   });
 
