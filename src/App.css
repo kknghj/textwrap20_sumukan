@@ -230,6 +230,32 @@ body {
   background: #047857;
 }
 
+.hwpx-download-action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.hwpx-template-hint,
+.hwpx-primary-hint {
+  margin: 0;
+  color: #475569;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.hwpx-limit-message {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border: 1px solid #fca5a5;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #b91c1c;
+  white-space: pre-line;
+  line-height: 1.5;
+}
+
 @media (max-width: 768px) {
   .editor-area {
     grid-template-columns: 1fr;

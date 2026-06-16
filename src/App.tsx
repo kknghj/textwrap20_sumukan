@@ -1,5 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { HwpTable } from './components/HwpTable';
+import {
+  HWPX_EXCEEDS_LIMIT_MESSAGE,
+  HWPX_TEMPLATE_HINT,
+} from './hwpx/constants';
+import { downloadHwpx } from './hwpx/downloadHwpx';
+import { prepareHwpxFromSource } from './hwpx/textToCells';
 import {
   DEFAULT_REMOVAL_OPTIONS,
   DEFAULT_TRANSFORM_OPTIONS,
@@ -46,6 +52,28 @@ function App() {
     ...DEFAULT_REMOVAL_OPTIONS,
   });
   const [copyMessage, setCopyMessage] = useState('');
+  const [hwpxMessage, setHwpxMessage] = useState('');
+
+  const hwpxPrepared = useMemo(() => {
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    return prepareHwpxFromSource(sourceText, {
+      spaceCountMode,
+      lineBreakMode,
+      removal,
+    });
+  }, [result.rows.length, sourceText, spaceCountMode, lineBreakMode, removal]);
+
+  const hasTransformResult = result.rows.length > 0;
+  const hwpxExceedsLimit =
+    hasTransformResult && hwpxPrepared !== null && !hwpxPrepared.ok;
+  const canDownloadHwpx =
+    hasTransformResult &&
+    hwpxPrepared !== null &&
+    hwpxPrepared.ok &&
+    hwpxPrepared.chars.some(Boolean);
 
   const gridRows =
     outputMode === 'hwpTable' && result.rows.length > 0
@@ -66,6 +94,7 @@ function App() {
     });
     setResult(converted);
     setCopyMessage('');
+    setHwpxMessage('');
   };
 
   const lineCount = result.rows.length;
@@ -81,6 +110,34 @@ function App() {
     } catch {
       setCopyMessage('복사에 실패했습니다. 브라우저 권한을 확인해 주세요.');
     }
+  };
+
+  const handleDownloadHwpx = async () => {
+    if (!canDownloadHwpx) {
+      if (hwpxExceedsLimit) {
+        setHwpxMessage(HWPX_EXCEEDS_LIMIT_MESSAGE);
+      }
+      return;
+    }
+
+    const downloadResult = await downloadHwpx(sourceText, {
+      spaceCountMode,
+      lineBreakMode,
+      removal,
+    });
+
+    if (downloadResult.success) {
+      setHwpxMessage('HWPX 파일을 다운로드했습니다. 한글에서 열어 필사해 주세요.');
+      setCopyMessage('');
+      return;
+    }
+
+    if (downloadResult.reason === 'exceeds_limit') {
+      setHwpxMessage(HWPX_EXCEEDS_LIMIT_MESSAGE);
+      return;
+    }
+
+    setHwpxMessage(downloadResult.message ?? 'HWPX 다운로드에 실패했습니다.');
   };
 
   const handleDownloadXlsx = () => {
@@ -103,6 +160,7 @@ function App() {
     setOutputMode('plain');
     setRemoval({ ...DEFAULT_REMOVAL_OPTIONS });
     setCopyMessage('');
+    setHwpxMessage('');
   };
 
   const handleRemovalChange = (key: RemovalOptionKey, checked: boolean) => {
@@ -231,6 +289,13 @@ function App() {
             ))}
           </div>
         </fieldset>
+
+        <div className="setting-group hwpx-download-note">
+          <p className="setting-hint hwpx-primary-hint">
+            <strong>HWPX 다운로드</strong>로 한글 연습장 파일을 바로 받을 수 있습니다.{' '}
+            {HWPX_TEMPLATE_HINT}
+          </p>
+        </div>
       </section>
 
       <section className="editor-area" aria-label="텍스트 변환 영역">
@@ -285,14 +350,24 @@ function App() {
             결과 복사
           </button>
         ) : null}
-        {outputMode === 'hwpTable' ? (
+        <div className="hwpx-download-action">
           <button
             type="button"
             className="primary-action"
+            onClick={handleDownloadHwpx}
+            disabled={!canDownloadHwpx}
+          >
+            .hwpx 다운로드
+          </button>
+          <p className="hwpx-template-hint">{HWPX_TEMPLATE_HINT}</p>
+        </div>
+        {outputMode === 'hwpTable' ? (
+          <button
+            type="button"
             onClick={handleDownloadXlsx}
             disabled={result.rows.length === 0}
           >
-            Excel 다운로드
+            Excel 다운로드 (임시)
           </button>
         ) : null}
         <button type="button" onClick={handleReset}>
@@ -300,6 +375,12 @@ function App() {
         </button>
       </section>
 
+      {hwpxExceedsLimit ? (
+        <p className="hwpx-limit-message" role="alert">
+          {HWPX_EXCEEDS_LIMIT_MESSAGE}
+        </p>
+      ) : null}
+      {hwpxMessage ? <p className="copy-message">{hwpxMessage}</p> : null}
       {copyMessage ? <p className="copy-message">{copyMessage}</p> : null}
     </div>
   );
