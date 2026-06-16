@@ -20,7 +20,10 @@ export function rowsToTsv(rows: string[][]): string {
   return rows.map((row) => row.join('\t')).join('\r\n');
 }
 
-/** Excel(.xlsx) 파일을 다운로드한다. HWP 붙여넣기에 가장 안정적이다. */
+/**
+ * Excel(.xlsx) 파일을 다운로드한다.
+ * @deprecated Excel 기반 한글 연습장 붙여넣기 레거시 전용 — 메인 UI에서 비노출.
+ */
 export function downloadXlsx(
   rows: string[][],
   filename = 'pilsa-practice.xlsx',
