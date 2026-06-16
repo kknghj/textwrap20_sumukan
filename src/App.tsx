@@ -21,6 +21,12 @@ import './App.css';
 
 type RemovalOptionKey = keyof RemovalOptions;
 
+/**
+ * @deprecated Excel 기반 「한글 연습장 붙여넣기」 출력 — 메인 UI에서 비노출.
+ * 레거시 코드 유지용. 필요 시 `true`로 되돌려 숨김 UI를 다시 켤 수 있음.
+ */
+const ENABLE_LEGACY_HWP_TABLE = false;
+
 const EMPTY_RESULT: TransformResult = { plainText: '', rows: [] };
 
 const REMOVAL_LABELS: Record<RemovalOptionKey, string> = {
@@ -47,12 +53,17 @@ function App() {
   const [lineBreakMode, setLineBreakMode] = useState<LineBreakMode>(
     DEFAULT_TRANSFORM_OPTIONS.lineBreakMode,
   );
+  /** @deprecated ENABLE_LEGACY_HWP_TABLE 전용 — 메인 UI에서는 plain 고정 */
   const [outputMode, setOutputMode] = useState<OutputMode>('plain');
   const [removal, setRemoval] = useState<RemovalOptions>({
     ...DEFAULT_REMOVAL_OPTIONS,
   });
   const [copyMessage, setCopyMessage] = useState('');
   const [hwpxMessage, setHwpxMessage] = useState('');
+
+  const activeOutputMode: OutputMode = ENABLE_LEGACY_HWP_TABLE
+    ? outputMode
+    : 'plain';
 
   const hwpxPrepared = useMemo(() => {
     if (result.rows.length === 0) {
@@ -78,12 +89,12 @@ function App() {
     hwpxPrepared !== null && hwpxPrepared.ok ? hwpxPrepared.pageCount : 0;
 
   const gridRows =
-    outputMode === 'hwpTable' && result.rows.length > 0
+    activeOutputMode === 'hwpTable' && result.rows.length > 0
       ? padRows(result.rows, maxCharsPerLine)
       : result.rows;
 
   const hasResult =
-    outputMode === 'hwpTable'
+    activeOutputMode === 'hwpTable'
       ? result.rows.length > 0
       : result.plainText.length > 0;
 
@@ -129,7 +140,9 @@ function App() {
     });
 
     if (downloadResult.success) {
-      setHwpxMessage('HWPX 파일을 다운로드했습니다. 한글에서 열어 필사해 주세요.');
+      setHwpxMessage(
+        'HWPX 연습장 파일을 다운로드했습니다. 한글에서 열어 필사해 주세요.',
+      );
       setCopyMessage('');
       return;
     }
@@ -142,6 +155,7 @@ function App() {
     setHwpxMessage(downloadResult.message ?? 'HWPX 다운로드에 실패했습니다.');
   };
 
+  /** @deprecated ENABLE_LEGACY_HWP_TABLE 전용 — Excel 기반 한글 연습장 붙여넣기 */
   const handleDownloadXlsx = () => {
     if (result.rows.length === 0) {
       return;
@@ -177,13 +191,22 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>필사 연습장 줄바꿈 변환기</h1>
+        <h1>한글 연습장 생성기</h1>
+        <p className="app-tagline">
+          텍스트를 바로 한글 연습장(.hwpx)으로 만들어 보세요.
+        </p>
+        <p className="app-description">
+          원문을 붙여넣으면 20×29칸 한글 연습장을 자동으로 생성합니다.
+          <br />
+          긴 글은 580칸마다 새 페이지로 나누어 저장됩니다.
+        </p>
         <p className="privacy-note">
-          입력한 텍스트는 서버로 전송되지 않으며, 모든 변환은 브라우저 안에서만 처리됩니다.
+          입력한 텍스트는 서버로 전송되지 않으며, 모든 처리는 브라우저 안에서만
+          이루어집니다.
         </p>
       </header>
 
-      <section className="settings" aria-label="변환 설정">
+      <section className="settings" aria-label="연습장 생성 설정">
         <div className="setting-group">
           <label htmlFor="max-chars">한 줄당 최대 글자 수</label>
           <input
@@ -193,38 +216,43 @@ function App() {
             value={maxCharsPerLine}
             onChange={(event) => handleMaxCharsChange(event.target.value)}
           />
+          <p className="setting-hint">HWPX 연습장 다운로드는 20칸 기준으로 생성됩니다.</p>
         </div>
 
-        <fieldset className="setting-group">
-          <legend>출력 형식</legend>
-          <label>
-            <input
-              type="radio"
-              name="output-mode"
-              value="plain"
-              checked={outputMode === 'plain'}
-              onChange={() => setOutputMode('plain')}
-            />
-            기본 텍스트
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="output-mode"
-              value="hwpTable"
-              checked={outputMode === 'hwpTable'}
-              onChange={() => setOutputMode('hwpTable')}
-            />
-            한글 연습장 붙여넣기
-          </label>
-          {outputMode === 'hwpTable' ? (
-            <p className="setting-hint">
-              한글 연습장에는{' '}
-              <strong>Excel 다운로드 → 엑셀에서 복사 → 한글 표의 첫 칸을 선택 후 붙여넣기</strong>를
-              사용하세요.
-            </p>
-          ) : null}
-        </fieldset>
+        {ENABLE_LEGACY_HWP_TABLE ? (
+          <fieldset className="setting-group">
+            <legend>출력 형식</legend>
+            <label>
+              <input
+                type="radio"
+                name="output-mode"
+                value="plain"
+                checked={outputMode === 'plain'}
+                onChange={() => setOutputMode('plain')}
+              />
+              기본 텍스트
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="output-mode"
+                value="hwpTable"
+                checked={outputMode === 'hwpTable'}
+                onChange={() => setOutputMode('hwpTable')}
+              />
+              한글 연습장 붙여넣기
+            </label>
+            {outputMode === 'hwpTable' ? (
+              <p className="setting-hint">
+                한글 연습장에는{' '}
+                <strong>
+                  Excel 다운로드 → 엑셀에서 복사 → 한글 표의 첫 칸을 선택 후 붙여넣기
+                </strong>
+                를 사용하세요.
+              </p>
+            ) : null}
+          </fieldset>
+        ) : null}
 
         <fieldset className="setting-group">
           <legend>글자 수 계산 방식</legend>
@@ -293,7 +321,7 @@ function App() {
         </fieldset>
       </section>
 
-      <section className="editor-area" aria-label="텍스트 변환 영역">
+      <section className="editor-area" aria-label="연습장 생성 영역">
         <div className="editor-panel">
           <label htmlFor="source-text">원문 입력</label>
           <textarea
@@ -306,16 +334,16 @@ function App() {
 
         <div className="editor-panel">
           <div className="panel-heading">
-            <label htmlFor="result-text">변환 결과</label>
+            <label htmlFor="result-text">줄바꿈 미리보기</label>
             {lineCount > 0 ? (
               <span className="line-count">{lineCount}줄</span>
             ) : null}
           </div>
-          {outputMode === 'hwpTable' ? (
+          {activeOutputMode === 'hwpTable' ? (
             <>
               <p className="result-hint">
-                Excel 다운로드 후 엑셀에서 표를 복사한 뒤, 한글 연습장 표 첫 칸에 '내용만
-                덮어쓰기' 선택하고 붙어넣으세요.
+                Excel 다운로드 후 엑셀에서 표를 복사한 뒤, 한글 연습장 표 첫 칸에
+                '내용만 덮어쓰기' 선택하고 붙어넣으세요.
               </p>
               <div className="result-table-wrap">
                 {gridRows.length > 0 ? (
@@ -330,7 +358,7 @@ function App() {
               id="result-text"
               value={result.plainText}
               readOnly
-              placeholder="변환 버튼을 누르면 결과가 표시됩니다."
+              placeholder="변환 버튼을 누르면 줄바꿈 미리보기가 표시됩니다."
             />
           )}
         </div>
@@ -342,20 +370,18 @@ function App() {
             <button type="button" onClick={handleTransform}>
               변환
             </button>
-            {outputMode === 'plain' ? (
-              <button type="button" onClick={handleCopy} disabled={!hasResult}>
-                결과 복사
-              </button>
-            ) : null}
+            <button type="button" onClick={handleCopy} disabled={!hasResult}>
+              결과 복사
+            </button>
             <button
               type="button"
               className="primary-action"
               onClick={handleDownloadHwpx}
               disabled={!canDownloadHwpx}
             >
-              .hwpx 다운로드
+              .hwpx 연습장 다운로드
             </button>
-            {outputMode === 'hwpTable' ? (
+            {ENABLE_LEGACY_HWP_TABLE && activeOutputMode === 'hwpTable' ? (
               <button
                 type="button"
                 onClick={handleDownloadXlsx}
@@ -366,16 +392,14 @@ function App() {
             ) : null}
           </div>
           <div className="actions-hwpx-info" aria-live="polite">
-            <p>현재 HWPX는 대각선 20×29 템플릿 기준입니다.</p>
             {hasTransformResult &&
             hwpxPrepared !== null &&
             hwpxPrepared.ok &&
             hwpxPageCount > 0 ? (
-              <p>
-                예상 HWPX 페이지: {hwpxPageCount} / 최대 {MAX_HWPX_PAGES}페이지
-              </p>
+              <p>예상 HWPX 페이지: {hwpxPageCount}</p>
             ) : null}
-            <p>최대 {MAX_HWPX_PAGES}페이지까지 생성할 수 있습니다.</p>
+            <p>최대 {MAX_HWPX_PAGES}페이지까지 생성 가능</p>
+            <p>현재 템플릿: 대각선 20×29</p>
           </div>
         </div>
         <button type="button" className="reset-action" onClick={handleReset}>

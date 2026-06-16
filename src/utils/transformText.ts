@@ -1,5 +1,6 @@
 export type SpaceCountMode = 'exclude' | 'include';
 export type LineBreakMode = 'word' | 'char';
+/** @deprecated Excel 기반 한글 연습장 붙여넣기 — `hwpTable`은 레거시 전용 */
 export type OutputMode = 'plain' | 'hwpTable';
 
 export interface RemovalOptions {

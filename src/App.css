@@ -38,6 +38,20 @@ body {
   font-size: clamp(1.5rem, 2vw, 2rem);
 }
 
+.app-tagline {
+  margin: 0 0 8px;
+  color: #334155;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.app-description {
+  margin: 0 0 8px;
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
 .privacy-note {
   margin: 0;
   color: #475569;
