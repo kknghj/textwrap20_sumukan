@@ -89,9 +89,19 @@ body {
 }
 
 .removal-options .checkbox-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 8px 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.removal-options .checkbox-grid label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  white-space: nowrap;
 }
 
 .editor-area {
@@ -143,7 +153,40 @@ body {
 .actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
   gap: 12px;
+}
+
+.actions-main {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px 24px;
+  min-width: min(100%, 280px);
+}
+
+.actions-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.actions-hwpx-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 220px;
+  max-width: 360px;
+}
+
+.actions-hwpx-info p {
+  margin: 0;
+  color: #475569;
+  font-size: 0.85rem;
+  line-height: 1.4;
 }
 
 .actions button {
@@ -166,11 +209,12 @@ body {
   cursor: not-allowed;
 }
 
-.actions button:last-child {
+.actions button.reset-action {
   background: #64748b;
+  margin-left: auto;
 }
 
-.actions button:last-child:hover {
+.actions button.reset-action:hover:not(:disabled) {
   background: #475569;
 }
 
@@ -230,21 +274,6 @@ body {
   background: #047857;
 }
 
-.hwpx-download-action {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-.hwpx-template-hint,
-.hwpx-primary-hint {
-  margin: 0;
-  color: #475569;
-  font-size: 0.85rem;
-  line-height: 1.4;
-}
-
 .hwpx-limit-message {
   margin: 12px 0 0;
   padding: 12px 14px;
@@ -263,5 +292,22 @@ body {
 
   .editor-panel textarea {
     min-height: 220px;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions-main {
+    width: 100%;
+  }
+
+  .actions-hwpx-info {
+    max-width: none;
+  }
+
+  .actions button.reset-action {
+    margin-left: 0;
+    align-self: flex-start;
   }
 }

@@ -2,8 +2,7 @@ import { useMemo, useState } from 'react';
 import { HwpTable } from './components/HwpTable';
 import {
   HWPX_EXCEEDS_LIMIT_MESSAGE,
-  HWPX_MULTI_PAGE_HINT,
-  HWPX_TEMPLATE_HINT,
+  MAX_HWPX_PAGES,
 } from './hwpx/constants';
 import { downloadHwpx } from './hwpx/downloadHwpx';
 import { prepareHwpxFromSource } from './hwpx/textToCells';
@@ -292,13 +291,6 @@ function App() {
             ))}
           </div>
         </fieldset>
-
-        <div className="setting-group hwpx-download-note">
-          <p className="setting-hint hwpx-primary-hint">
-            <strong>HWPX 다운로드</strong>로 한글 연습장 파일을 바로 받을 수 있습니다.{' '}
-            {HWPX_TEMPLATE_HINT}
-          </p>
-        </div>
       </section>
 
       <section className="editor-area" aria-label="텍스트 변환 영역">
@@ -345,40 +337,48 @@ function App() {
       </section>
 
       <section className="actions">
-        <button type="button" onClick={handleTransform}>
-          변환
-        </button>
-        {outputMode === 'plain' ? (
-          <button type="button" onClick={handleCopy} disabled={!hasResult}>
-            결과 복사
-          </button>
-        ) : null}
-        <div className="hwpx-download-action">
-          <button
-            type="button"
-            className="primary-action"
-            onClick={handleDownloadHwpx}
-            disabled={!canDownloadHwpx}
-          >
-            .hwpx 다운로드
-          </button>
-          <p className="hwpx-template-hint">{HWPX_TEMPLATE_HINT}</p>
-          {hwpxPageCount > 1 ? (
-            <p className="hwpx-template-hint">
-              {HWPX_MULTI_PAGE_HINT} (예상 {hwpxPageCount}페이지)
-            </p>
-          ) : null}
+        <div className="actions-main">
+          <div className="actions-buttons">
+            <button type="button" onClick={handleTransform}>
+              변환
+            </button>
+            {outputMode === 'plain' ? (
+              <button type="button" onClick={handleCopy} disabled={!hasResult}>
+                결과 복사
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="primary-action"
+              onClick={handleDownloadHwpx}
+              disabled={!canDownloadHwpx}
+            >
+              .hwpx 다운로드
+            </button>
+            {outputMode === 'hwpTable' ? (
+              <button
+                type="button"
+                onClick={handleDownloadXlsx}
+                disabled={result.rows.length === 0}
+              >
+                Excel 다운로드 (임시)
+              </button>
+            ) : null}
+          </div>
+          <div className="actions-hwpx-info" aria-live="polite">
+            <p>현재 HWPX는 대각선 20×29 템플릿 기준입니다.</p>
+            {hasTransformResult &&
+            hwpxPrepared !== null &&
+            hwpxPrepared.ok &&
+            hwpxPageCount > 0 ? (
+              <p>
+                예상 HWPX 페이지: {hwpxPageCount} / 최대 {MAX_HWPX_PAGES}페이지
+              </p>
+            ) : null}
+            <p>최대 {MAX_HWPX_PAGES}페이지까지 생성할 수 있습니다.</p>
+          </div>
         </div>
-        {outputMode === 'hwpTable' ? (
-          <button
-            type="button"
-            onClick={handleDownloadXlsx}
-            disabled={result.rows.length === 0}
-          >
-            Excel 다운로드 (임시)
-          </button>
-        ) : null}
-        <button type="button" onClick={handleReset}>
+        <button type="button" className="reset-action" onClick={handleReset}>
           초기화
         </button>
       </section>
