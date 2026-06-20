@@ -1,9 +1,4 @@
-import {
-  CHAR_PR_ID_REF,
-  HP_NS,
-  PRACTICE_COLS,
-  PRACTICE_ROWS,
-} from './constants';
+import { HP_NS, PRACTICE_COLS, PRACTICE_ROWS } from './constants';
 import type { PracticeCell } from './types';
 
 function getCellAddr(tc: Element): { rowAddr: number; colAddr: number } {
@@ -92,9 +87,9 @@ export function parseSection(doc: Document): PracticeCell[] {
 export function findTargetRun(tc: Element): Element | null {
   const runs = Array.from(tc.getElementsByTagNameNS(HP_NS, 'run'));
 
-  const preferred = runs.find(
-    (run) => run.getAttribute('charPrIDRef') === CHAR_PR_ID_REF,
+  const emptyRun = runs.find(
+    (run) => run.getElementsByTagNameNS(HP_NS, 't').length === 0,
   );
 
-  return preferred ?? runs[0] ?? null;
+  return emptyRun ?? runs[0] ?? null;
 }

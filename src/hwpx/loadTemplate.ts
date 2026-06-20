@@ -1,10 +1,15 @@
-import { TEMPLATE_BASE_PATH, TEMPLATE_FILE_PATHS } from './constants';
+import {
+  DEFAULT_TEMPLATE_ID,
+  TEMPLATE_FILE_PATHS,
+} from './constants';
+import { getTemplateBasePath, type PracticeTemplateId } from './templates';
 import type { TemplateFiles } from './types';
 
 /** 브라우저에서 public/templates 경로의 HWPX 템플릿을 로드한다. */
 export async function loadTemplate(
-  basePath = TEMPLATE_BASE_PATH,
+  templateId: PracticeTemplateId = DEFAULT_TEMPLATE_ID,
 ): Promise<TemplateFiles> {
+  const basePath = getTemplateBasePath(templateId);
   const files: TemplateFiles = new Map();
 
   await Promise.all(

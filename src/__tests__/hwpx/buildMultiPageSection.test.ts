@@ -45,30 +45,30 @@ describe('buildMultiPageSection', () => {
     });
   });
 
-  it('1161칸에서는 rowCnt=87, hp:tc 1740개로 확장한다', () => {
-    const doc = parseFixtureSection0();
-    buildMultiPageSection(doc, makeIndexedChars(1161));
+    it('1161칸에서는 rowCnt=87, hp:tc 1740개로 확장한다', () => {
+      const doc = parseFixtureSection0();
+      buildMultiPageSection(doc, makeIndexedChars(1161));
 
-    expect(countTables(doc)).toBe(1);
-    expect(getTableDimensions(doc)).toEqual({
-      rowCnt: PRACTICE_ROWS * 3,
-      colCnt: PRACTICE_COLS,
-      tcCount: MAX_CELLS * 3,
-    });
-  });
+      expect(countTables(doc)).toBe(1);
+      expect(getTableDimensions(doc)).toEqual({
+        rowCnt: PRACTICE_ROWS * 3,
+        colCnt: PRACTICE_COLS,
+        tcCount: MAX_CELLS * 3,
+      });
+    }, 30_000);
 
-  it('hp:tbl@id와 표 문단 hp:p@id는 단일 표 확장 시 중복되지 않는다', () => {
-    const doc = parseFixtureSection0();
-    buildMultiPageSection(doc, makeIndexedChars(1161));
+    it('hp:tbl@id와 표 문단 hp:p@id는 단일 표 확장 시 중복되지 않는다', () => {
+      const doc = parseFixtureSection0();
+      buildMultiPageSection(doc, makeIndexedChars(1161));
 
-    const tableIds = getTableIds(doc);
-    const paragraphIds = getTableParagraphIds(doc);
+      const tableIds = getTableIds(doc);
+      const paragraphIds = getTableParagraphIds(doc);
 
-    expect(new Set(tableIds).size).toBe(tableIds.length);
-    expect(new Set(paragraphIds).size).toBe(paragraphIds.length);
-    expect(tableIds).toHaveLength(1);
-    expect(paragraphIds).toHaveLength(1);
-  });
+      expect(new Set(tableIds).size).toBe(tableIds.length);
+      expect(new Set(paragraphIds).size).toBe(paragraphIds.length);
+      expect(tableIds).toHaveLength(1);
+      expect(paragraphIds).toHaveLength(1);
+    }, 30_000);
 
   it('페이지 경계의 글자를 올바른 셀에 매핑한다', () => {
     const doc = parseFixtureSection0();

@@ -5,6 +5,12 @@ import {
   MAX_HWPX_PAGES,
 } from './hwpx/constants';
 import { downloadHwpx } from './hwpx/downloadHwpx';
+import {
+  DEFAULT_PRACTICE_TEMPLATE_ID,
+  PRACTICE_TEMPLATES,
+  getPracticeTemplateMeta,
+  type PracticeTemplateId,
+} from './hwpx/templates';
 import { prepareHwpxFromSource } from './hwpx/textToCells';
 import {
   DEFAULT_REMOVAL_OPTIONS,
@@ -60,6 +66,11 @@ function App() {
   });
   const [copyMessage, setCopyMessage] = useState('');
   const [hwpxMessage, setHwpxMessage] = useState('');
+  const [practiceTemplateId, setPracticeTemplateId] = useState<PracticeTemplateId>(
+    DEFAULT_PRACTICE_TEMPLATE_ID,
+  );
+
+  const selectedTemplate = getPracticeTemplateMeta(practiceTemplateId);
 
   const activeOutputMode: OutputMode = ENABLE_LEGACY_HWP_TABLE
     ? outputMode
@@ -137,6 +148,7 @@ function App() {
       spaceCountMode,
       lineBreakMode,
       removal,
+      templateId: practiceTemplateId,
     });
 
     if (downloadResult.success) {
@@ -177,6 +189,7 @@ function App() {
     setRemoval({ ...DEFAULT_REMOVAL_OPTIONS });
     setCopyMessage('');
     setHwpxMessage('');
+    setPracticeTemplateId(DEFAULT_PRACTICE_TEMPLATE_ID);
   };
 
   const handleRemovalChange = (key: RemovalOptionKey, checked: boolean) => {
@@ -218,6 +231,23 @@ function App() {
           />
           <p className="setting-hint">HWPX 연습장 다운로드는 20칸 기준으로 생성됩니다.</p>
         </div>
+
+        <fieldset className="setting-group">
+          <legend>연습장 종류</legend>
+          {PRACTICE_TEMPLATES.map((template) => (
+            <label key={template.id}>
+              <input
+                type="radio"
+                name="practice-template"
+                value={template.id}
+                checked={practiceTemplateId === template.id}
+                onChange={() => setPracticeTemplateId(template.id)}
+              />
+              {template.label}
+            </label>
+          ))}
+          <p className="setting-hint">{selectedTemplate.description}</p>
+        </fieldset>
 
         {ENABLE_LEGACY_HWP_TABLE ? (
           <fieldset className="setting-group">
@@ -399,7 +429,7 @@ function App() {
               <p>예상 HWPX 페이지: {hwpxPageCount}</p>
             ) : null}
             <p>최대 {MAX_HWPX_PAGES}페이지까지 생성 가능</p>
-            <p>현재 템플릿: 대각선 20×29</p>
+            <p>현재 템플릿: {selectedTemplate.label} 20×29</p>
           </div>
         </div>
         <button type="button" className="reset-action" onClick={handleReset}>

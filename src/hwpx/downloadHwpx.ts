@@ -1,20 +1,31 @@
 import { buildMultiPageSection } from './buildMultiPageSection';
 import { buildHwpx } from './buildHwpx';
-import { HWPX_FILENAME, MAX_HWPX_CELLS } from './constants';
+import {
+  DEFAULT_TEMPLATE_ID,
+  HWPX_FILENAME,
+  MAX_HWPX_CELLS,
+  getHwpxFilename,
+} from './constants';
 import { loadTemplate } from './loadTemplate';
 import { prepareHwpxFromSource } from './textToCells';
+import type { PracticeTemplateId } from './templates';
 import type { HwpxDownloadResult } from './types';
 import type { TransformOptions } from '../utils/transformText';
 
 export type HwpxTransformOptions = Omit<TransformOptions, 'maxCharsPerLine'>;
 
+export interface CreateHwpxBlobOptions extends HwpxTransformOptions {
+  templateId?: PracticeTemplateId;
+}
+
 /** 원문과 옵션으로 HWPX Blob을 생성한다. */
 export async function createHwpxBlob(
   sourceText: string,
-  options: HwpxTransformOptions,
+  options: CreateHwpxBlobOptions,
   loadTemplateFn: typeof loadTemplate = loadTemplate,
 ): Promise<HwpxDownloadResult> {
-  const prepared = prepareHwpxFromSource(sourceText, options);
+  const { templateId = DEFAULT_TEMPLATE_ID, ...transformOptions } = options;
+  const prepared = prepareHwpxFromSource(sourceText, transformOptions);
 
   if (!prepared.ok) {
     return {
@@ -33,7 +44,7 @@ export async function createHwpxBlob(
   }
 
   try {
-    const templateFiles = await loadTemplateFn();
+    const templateFiles = await loadTemplateFn(templateId);
     const section0Bytes = templateFiles.get('Contents/section0.xml');
 
     if (!section0Bytes) {
@@ -77,13 +88,15 @@ export function downloadHwpxBlob(
 /** 원문과 옵션으로 HWPX 파일을 생성·다운로드한다. */
 export async function downloadHwpx(
   sourceText: string,
-  options: HwpxTransformOptions,
-  filename = HWPX_FILENAME,
+  options: CreateHwpxBlobOptions,
+  filename?: string,
 ): Promise<HwpxDownloadResult> {
+  const templateId = options.templateId ?? DEFAULT_TEMPLATE_ID;
+  const resolvedFilename = filename ?? getHwpxFilename(templateId);
   const result = await createHwpxBlob(sourceText, options);
 
   if (result.success) {
-    downloadHwpxBlob(result.blob, filename);
+    downloadHwpxBlob(result.blob, resolvedFilename);
   }
 
   return result;
