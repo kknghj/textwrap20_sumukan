@@ -1,9 +1,5 @@
 import { useMemo, useState } from 'react';
-import { HwpTable } from './components/HwpTable';
-import {
-  HWPX_EXCEEDS_LIMIT_MESSAGE,
-  MAX_HWPX_PAGES,
-} from './hwpx/constants';
+import { HWPX_EXCEEDS_LIMIT_MESSAGE } from './hwpx/constants';
 import { downloadHwpx } from './hwpx/downloadHwpx';
 import {
   DEFAULT_PRACTICE_TEMPLATE_ID,
@@ -16,22 +12,14 @@ import {
   DEFAULT_REMOVAL_OPTIONS,
   DEFAULT_TRANSFORM_OPTIONS,
   transformText,
-  type OutputMode,
   type RemovalOptions,
   type SpaceCountMode,
   type LineBreakMode,
   type TransformResult,
 } from './utils/transformText';
-import { downloadXlsx, padRows } from './utils/tableUtils';
 import './App.css';
 
 type RemovalOptionKey = keyof RemovalOptions;
-
-/**
- * @deprecated Excel 기반 「한글 연습장 붙여넣기」 출력 — 메인 UI에서 비노출.
- * 레거시 코드 유지용. 필요 시 `true`로 되돌려 숨김 UI를 다시 켤 수 있음.
- */
-const ENABLE_LEGACY_HWP_TABLE = false;
 
 const EMPTY_RESULT: TransformResult = { plainText: '', rows: [] };
 
@@ -59,8 +47,6 @@ function App() {
   const [lineBreakMode, setLineBreakMode] = useState<LineBreakMode>(
     DEFAULT_TRANSFORM_OPTIONS.lineBreakMode,
   );
-  /** @deprecated ENABLE_LEGACY_HWP_TABLE 전용 — 메인 UI에서는 plain 고정 */
-  const [outputMode, setOutputMode] = useState<OutputMode>('plain');
   const [removal, setRemoval] = useState<RemovalOptions>({
     ...DEFAULT_REMOVAL_OPTIONS,
   });
@@ -71,10 +57,6 @@ function App() {
   );
 
   const selectedTemplate = getPracticeTemplateMeta(practiceTemplateId);
-
-  const activeOutputMode: OutputMode = ENABLE_LEGACY_HWP_TABLE
-    ? outputMode
-    : 'plain';
 
   const hwpxPrepared = useMemo(() => {
     if (result.rows.length === 0) {
@@ -96,18 +78,7 @@ function App() {
     hwpxPrepared !== null &&
     hwpxPrepared.ok &&
     hwpxPrepared.chars.some(Boolean);
-  const hwpxPageCount =
-    hwpxPrepared !== null && hwpxPrepared.ok ? hwpxPrepared.pageCount : 0;
-
-  const gridRows =
-    activeOutputMode === 'hwpTable' && result.rows.length > 0
-      ? padRows(result.rows, maxCharsPerLine)
-      : result.rows;
-
-  const hasResult =
-    activeOutputMode === 'hwpTable'
-      ? result.rows.length > 0
-      : result.plainText.length > 0;
+  const hasResult = result.plainText.length > 0;
 
   const handleTransform = () => {
     const converted = transformText(sourceText, {
@@ -167,25 +138,12 @@ function App() {
     setHwpxMessage(downloadResult.message ?? 'HWPX 다운로드에 실패했습니다.');
   };
 
-  /** @deprecated ENABLE_LEGACY_HWP_TABLE 전용 — Excel 기반 한글 연습장 붙여넣기 */
-  const handleDownloadXlsx = () => {
-    if (result.rows.length === 0) {
-      return;
-    }
-
-    downloadXlsx(result.rows, 'pilsa-practice.xlsx', maxCharsPerLine);
-    setCopyMessage(
-      'Excel 파일을 다운로드했습니다. 엑셀에서 표를 복사한 뒤 한글 연습장 표를 선택하고 붙여넣으세요.',
-    );
-  };
-
   const handleReset = () => {
     setSourceText('');
     setResult(EMPTY_RESULT);
     setMaxCharsPerLine(DEFAULT_TRANSFORM_OPTIONS.maxCharsPerLine);
     setSpaceCountMode(DEFAULT_TRANSFORM_OPTIONS.spaceCountMode);
     setLineBreakMode(DEFAULT_TRANSFORM_OPTIONS.lineBreakMode);
-    setOutputMode('plain');
     setRemoval({ ...DEFAULT_REMOVAL_OPTIONS });
     setCopyMessage('');
     setHwpxMessage('');
@@ -221,7 +179,7 @@ function App() {
 
       <section className="settings" aria-label="연습장 생성 설정">
         <div className="setting-group">
-          <label htmlFor="max-chars">한 줄당 최대 글자 수</label>
+          <label htmlFor="max-chars">한 줄당 최대 글자 수 (미리보기 전용)</label>
           <input
             id="max-chars"
             type="number"
@@ -248,41 +206,6 @@ function App() {
           ))}
           <p className="setting-hint">{selectedTemplate.description}</p>
         </fieldset>
-
-        {ENABLE_LEGACY_HWP_TABLE ? (
-          <fieldset className="setting-group">
-            <legend>출력 형식</legend>
-            <label>
-              <input
-                type="radio"
-                name="output-mode"
-                value="plain"
-                checked={outputMode === 'plain'}
-                onChange={() => setOutputMode('plain')}
-              />
-              기본 텍스트
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="output-mode"
-                value="hwpTable"
-                checked={outputMode === 'hwpTable'}
-                onChange={() => setOutputMode('hwpTable')}
-              />
-              한글 연습장 붙여넣기
-            </label>
-            {outputMode === 'hwpTable' ? (
-              <p className="setting-hint">
-                한글 연습장에는{' '}
-                <strong>
-                  Excel 다운로드 → 엑셀에서 복사 → 한글 표의 첫 칸을 선택 후 붙여넣기
-                </strong>
-                를 사용하세요.
-              </p>
-            ) : null}
-          </fieldset>
-        ) : null}
 
         <fieldset className="setting-group">
           <legend>글자 수 계산 방식</legend>
@@ -369,68 +292,31 @@ function App() {
               <span className="line-count">{lineCount}줄</span>
             ) : null}
           </div>
-          {activeOutputMode === 'hwpTable' ? (
-            <>
-              <p className="result-hint">
-                Excel 다운로드 후 엑셀에서 표를 복사한 뒤, 한글 연습장 표 첫 칸에
-                '내용만 덮어쓰기' 선택하고 붙어넣으세요.
-              </p>
-              <div className="result-table-wrap">
-                {gridRows.length > 0 ? (
-                  <HwpTable rows={gridRows} />
-                ) : (
-                  <p className="result-empty">변환 버튼을 누르면 표가 표시됩니다.</p>
-                )}
-              </div>
-            </>
-          ) : (
-            <textarea
-              id="result-text"
-              value={result.plainText}
-              readOnly
-              placeholder="변환 버튼을 누르면 줄바꿈 미리보기가 표시됩니다."
-            />
-          )}
+          <textarea
+            id="result-text"
+            value={result.plainText}
+            readOnly
+            placeholder="변환 버튼을 누르면 줄바꿈 미리보기가 표시됩니다."
+          />
         </div>
       </section>
 
       <section className="actions">
-        <div className="actions-main">
-          <div className="actions-buttons">
-            <button type="button" onClick={handleTransform}>
-              변환
-            </button>
-            <button type="button" onClick={handleCopy} disabled={!hasResult}>
-              결과 복사
-            </button>
-            <button
-              type="button"
-              className="primary-action"
-              onClick={handleDownloadHwpx}
-              disabled={!canDownloadHwpx}
-            >
-              .hwpx 연습장 다운로드
-            </button>
-            {ENABLE_LEGACY_HWP_TABLE && activeOutputMode === 'hwpTable' ? (
-              <button
-                type="button"
-                onClick={handleDownloadXlsx}
-                disabled={result.rows.length === 0}
-              >
-                Excel 다운로드 (임시)
-              </button>
-            ) : null}
-          </div>
-          <div className="actions-hwpx-info" aria-live="polite">
-            {hasTransformResult &&
-            hwpxPrepared !== null &&
-            hwpxPrepared.ok &&
-            hwpxPageCount > 0 ? (
-              <p>예상 HWPX 페이지: {hwpxPageCount}</p>
-            ) : null}
-            <p>최대 {MAX_HWPX_PAGES}페이지까지 생성 가능</p>
-            <p>현재 템플릿: {selectedTemplate.label} 20×29</p>
-          </div>
+        <div className="actions-buttons">
+          <button type="button" onClick={handleTransform}>
+            변환
+          </button>
+          <button type="button" onClick={handleCopy} disabled={!hasResult}>
+            결과 복사
+          </button>
+          <button
+            type="button"
+            className="primary-action"
+            onClick={handleDownloadHwpx}
+            disabled={!canDownloadHwpx}
+          >
+            .hwpx 연습장 다운로드
+          </button>
         </div>
         <button type="button" className="reset-action" onClick={handleReset}>
           초기화
@@ -444,6 +330,13 @@ function App() {
       ) : null}
       {hwpxMessage ? <p className="copy-message">{hwpxMessage}</p> : null}
       {copyMessage ? <p className="copy-message">{copyMessage}</p> : null}
+
+      <footer className="app-footer">
+        <p>
+          연습장 HWPX 템플릿: 디시인사이드 문방구 마이너 갤러리 BANOLIM님 무료 배포
+          양식 기반 (상업적 이용 없음)
+        </p>
+      </footer>
     </div>
   );
 }

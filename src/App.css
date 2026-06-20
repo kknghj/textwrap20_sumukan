@@ -167,17 +167,8 @@ body {
 .actions {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
-}
-
-.actions-main {
-  display: flex;
-  flex: 1;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 16px 24px;
-  min-width: min(100%, 280px);
 }
 
 .actions-buttons {
@@ -185,22 +176,7 @@ body {
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-}
-
-.actions-hwpx-info {
-  display: flex;
   flex: 1;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 220px;
-  max-width: 360px;
-}
-
-.actions-hwpx-info p {
-  margin: 0;
-  color: #475569;
-  font-size: 0.85rem;
-  line-height: 1.4;
 }
 
 .actions button {
@@ -233,8 +209,7 @@ body {
 }
 
 
-.setting-hint,
-.result-hint {
+.setting-hint {
   margin: 8px 0 0;
   color: #475569;
   font-size: 0.9rem;
@@ -242,42 +217,23 @@ body {
   line-height: 1.5;
 }
 
+.app-footer {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.app-footer p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
 .copy-message {
   margin: 12px 0 0;
   color: #047857;
   font-weight: 600;
-}
-
-
-.result-table-wrap {
-  width: 100%;
-  min-height: 320px;
-  padding: 14px;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  background: #ffffff;
-  overflow: auto;
-}
-
-.result-empty {
-  margin: 0;
-  color: #94a3b8;
-}
-
-.hwp-table {
-  border-collapse: collapse;
-  width: 100%;
-  table-layout: fixed;
-}
-
-.hwp-table td {
-  border: 1px solid #cbd5e1;
-  padding: 8px 4px;
-  text-align: center;
-  min-width: 2em;
-  height: 2em;
-  font: inherit;
-  line-height: 1.5;
 }
 
 .actions button.primary-action {
@@ -310,18 +266,10 @@ body {
 
   .actions {
     flex-direction: column;
-  }
-
-  .actions-main {
-    width: 100%;
-  }
-
-  .actions-hwpx-info {
-    max-width: none;
+    align-items: stretch;
   }
 
   .actions button.reset-action {
-    margin-left: 0;
     align-self: flex-start;
   }
 }

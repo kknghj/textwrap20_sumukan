@@ -1,5 +1,5 @@
 {
-  "name": "textwrap20",
+  "name": "hangul-practice-generator",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -13,8 +13,7 @@
   "dependencies": {
     "fflate": "^0.8.3",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "xlsx": "^0.18.5"
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
     "@types/jsdom": "^28.0.3",
